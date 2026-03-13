@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon Mole Hunter | Premium Arcade</title>
+    <style>
+        :root {
+            --primary: #00f2ff;
+            --secondary: #7000ff;
+            --bg: #0a0a0c;
+            --surface: rgba(255, 255, 255, 0.05);
+            --text: #ffffff;
+            --font-main: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            background-color: var(--bg);
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(112, 0, 255, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(0, 242, 255, 0.15) 0%, transparent 50%);
+            color: var(--text);
+            font-family: var(--font-main);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+            padding: 20px;
+        }
+
+        /* Header & Stats */
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .stats-container {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 10px 20px;
+            border-radius: 12px;
+            min-width: 120px;
+        }
+
+        .stat-label {
+            display: block;
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.5);
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        /* Game Board */
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            width: 100%;
+            max-width: 600px;
+            margin-bottom: 30px;
+        }
+
+        .hole {
+            aspect-ratio: 1 / 1;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 50%;
+            position: relative;
+            overflow: hidden;
+            border: 2px solid rgba(255, 255, 255, 0.05);
+            box-shadow: inset 0 10px 20px rgba(0,0,0,0.5);
+        }
+
+        /* The Mole */
+        .mole {
+            width: 80%;
+            height: 80%;
+            position: absolute;
+            bottom: -100%;
+            left: 10%;
+            background: linear-gradient(135deg, #a78bfa, #7c3aed);
+            border-radius: 50% 50% 20% 20%;
+            cursor: crosshair;
+            transition: bottom 0.1s ease-out;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 0 20px rgba(124, 58, 237, 0.4);
+        }
+
+        /* Mole Face */
+        .mole::before, .mole::after {
+            content: '';
+            position: absolute;
+            background: #fff;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            top: 25%;
+        }
+        .mole::before { left: 25%; }
+        .mole::after { right: 25%; }
+
+        .mole-eye-inner {
+            width: 6px;
+            height: 6px;
+            background: #000;
+            border-radius: 50%;
+            position: absolute;
+            top: 30%;
+            left: 30%;
+            z-index: 2;
+        }
+
+        .mole.up {
+            bottom: 10%;
+        }
+
+        .mole.hit {
+            transform: scale(0.9);
+            background: var(--primary) !important;
+            filter: brightness(1.5);
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, var(--secondary), #4a00e0);
+            border: none;
+            color: white;
+            padding: 15px 40px;
+            border-radius: 30px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 10px 20px rgba(112, 0, 255, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 15px 30px rgba(112, 0, 255, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0) scale(0.95);
+        }
+
+        .btn:disabled {
+            background: #333;
+            cursor: not-allowed;
+            box-shadow: none;
+            opacity: 0.6;
+        }
+
+        /* Animations */
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Mobile Adjustments */
+        @media (max-width: 480px) {
+            .game-board {
+                gap: 10px;
+                max-width: 350px;
+            }
+            h1 { font-size: 1.8rem; }
+            .stat-card { min-width: 90px; padding: 8px 12px; }
+        }
+
+        /* Custom Modal */
+        #game-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(8px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .modal-content {
+            background: var(--surface);
+            padding: 40px;
+            border-radius: 24px;
+            border: 1px solid rgba(255,255,255,0.1);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .modal-title {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+
+        .modal-score {
+            font-size: 3rem;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Neon Mole Hunter</h1>
+        <div class="stats-container">
+            <div class="stat-card">
+                <span class="stat-label">Score</span>
+                <span id="score" class="stat-value">0</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">High Score</span>
+                <span id="highscore" class="stat-value">0</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Time</span>
+                <span id="time-left" class="stat-value">30</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="game-board">
+        <div class="hole"><div class="mole"></div></div>
+        <div class="hole"><div class="mole"></div></div>
+        <div class="hole"><div class="mole"></div></div>
+        <div class="hole"><div class="mole"></div></div>
+        <div class="hole"><div class="mole"></div></div>
+        <div class="hole"><div class="mole"></div></div>
+        <div class="hole"><div class="mole"></div></div>
+        <div class="hole"><div class="mole"></div></div>
+        <div class="hole"><div class="mole"></div></div>
+    </main>
+
+    <div class="controls">
+        <button id="start-btn" class="btn">Start Game</button>
+    </div>
+
+    <!-- Game Over Modal -->
+    <div id="game-modal">
+        <div class="modal-content">
+            <div class="modal-title">Game Over!</div>
+            <p>You hunted some serious neon moles.</p>
+            <div class="modal-score" id="final-score">0</div>
+            <button class="btn" onclick="closeModal()">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        const holes = document.querySelectorAll('.hole');
+        const moles = document.querySelectorAll('.mole');
+        const scoreBoard = document.querySelector('#score');
+        const highscoreBoard = document.querySelector('#highscore');
+        const timeLeftBoard = document.querySelector('#time-left');
+        const startBtn = document.querySelector('#start-btn');
+        const modal = document.querySelector('#game-modal');
+        const finalScoreDisplay = document.querySelector('#final-score');
+
+        let lastHole;
+        let timeUp = false;
+        let score = 0;
+        let timeLeft = 30;
+        let timerId;
+        let highscore = localStorage.getItem('moleHighScore') || 0;
+
+        // Initialize display
+        highscoreBoard.textContent = highscore;
+
+        function randomTime(min, max) {
+            return Math.round(Math.random() * (max - min) + min);
+        }
+
+        function randomHole(holes) {
+            const idx = Math.floor(Math.random() * holes.length);
+            const hole = holes[idx];
+            if (hole === lastHole) {
+                return randomHole(holes);
+            }
+            lastHole = hole;
+            return hole;
+        }
+
+        function peep() {
+            const time = randomTime(600, 1200); // Speed of the mole
+            const hole = randomHole(holes);
+            const mole = hole.querySelector('.mole');
+            
+            mole.classList.remove('hit');
+            mole.classList.add('up');
+
+            setTimeout(() => {
+                mole.classList.remove('up');
+                if (!timeUp) peep();
+            }, time);
+        }
+
+        function startGame() {
+            // Reset stats
+            score = 0;
+            timeLeft = 30;
+            timeUp = false;
+            
+            scoreBoard.textContent = 0;
+            timeLeftBoard.textContent = timeLeft;
+            startBtn.disabled = true;
+
+            peep();
+            
+            // Countdown timer
+            timerId = setInterval(() => {
+                timeLeft--;
+                timeLeftBoard.textContent = timeLeft;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timerId);
+                    timeUp = true;
+                    gameOver();
+                }
+            }, 1000);
+        }
+
+        function whack(e) {
+            if (!e.isTrusted) return; // Cheating check
+            
+            if (this.classList.contains('up') && !this.classList.contains('hit')) {
+                score++;
+                this.classList.add('hit');
+                this.classList.remove('up');
+                scoreBoard.textContent = score;
+
+                // Simple visual feedback vibration/sound could go here
+                if (window.navigator.vibrate) {
+                    window.navigator.vibrate(50);
+                }
+            }
+        }
+
+        function gameOver() {
+            startBtn.disabled = false;
+            finalScoreDisplay.textContent = score;
+            modal.style.display = 'flex';
+
+            if (score > highscore) {
+                highscore = score;
+                localStorage.setItem('moleHighScore', highscore);
+                highscoreBoard.textContent = highscore;
+            }
+        }
+
+        function closeModal() {
+            modal.style.display = 'none';
+        }
+
+        moles.forEach(mole => mole.addEventListener('click', whack));
+        startBtn.addEventListener('click', startGame);
+
+        // Close modal on background click
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+    </script>
+</body>
+</html>
